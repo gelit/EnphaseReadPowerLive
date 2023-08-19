@@ -5,7 +5,7 @@ My goal is to read Power Consumed & Power Produced LIVE values (in real-time)
 
 This doc https://enphase.com/download/iq-gateway-access-using-local-apis-or-local-ui-token-based-authentication-tech-brief gives me help 
 - Follow "Obtaining a token via web UI"
-- Use Code and adapt parameters P1 P2 P3 to your configuration  
+- Use Code and adapt parameters P1 P2 to your configuration  
 - Add libraries ESP8266WiFi.h WiFiUdp.h ESP_SSLClient.h
 - With Format=0 you see raw data sended by Enphase S-metered (request = /ivp/meters/readings)
 - With Format=1 you can read Solar production (Solar_W) & provider (Grid_W) values in Watt
