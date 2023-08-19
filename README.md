@@ -9,7 +9,9 @@ This doc https://enphase.com/download/iq-gateway-access-using-local-apis-or-loca
 - Add libraries ESP8266WiFi.h WiFiUdp.h ESP_SSLClient.h
 - With Format=0 you see raw data sended by Enphase S-metered (request = /ivp/meters/readings)
 - With Format=1 you can read Solar production (Solar_W) & provider (Grid_W) values in Watt
-- minus Grid_W value means you are richer !   
+- minus Grid_W value means you are richer !  
+
+Tested with software version D7.6.175  
 
 My full version manages this electric boiler :
 - During day period : boil if Power available
