@@ -1,5 +1,4 @@
-/*
-Adapt Parameters 
+/*Adapt Parameters 
 - P1(WiFi SSID & password)
 - P2 (Token)
 
@@ -12,10 +11,10 @@ mDNS request : envoy.local=192.168.1.127  normal value
 Req    Solar_W=4377  Grid_W=-2498
 */
 
-const byte FORMAT = 1; 
+const byte FORMAT = 1;  // 0 --> raw Data  /  1 -->  Req    Solar_W=4377  Grid_W=-2498
 
 byte Pause = 1;                               // https request every min
-int Solar_W, Cons_W, Grid_W;
+int Solar_W, Grid_W;
 
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
@@ -26,7 +25,6 @@ WiFiClient basic_client;
 
 WiFiUDP Udp;
   
-int NowHour, NowHourM, NowMinute;
 unsigned long T1,T2;  // Wifi
 unsigned long T5;     // Pause
 
@@ -37,7 +35,7 @@ IPAddress ip(0,0,0,0);
 using namespace mDNSResolver;
 Resolver resolver(Udp);
 
-bool Resolve() { // j'ai perdu un jour début août avant de comprendre que envoy.local avait changé d'adrIP !!!???
+bool Resolve() { // I don't use static IP 
   bool ok = 0;
   IPAddress ipL(0,0,0,0);
   Serial.print("mDNS request : ");
@@ -83,8 +81,8 @@ void loop() {
 }
 
 bool WifiON() {
-  const char* ssid = "xyz";                    // P1
-  const char* pass = "123";                    // P1
+  const char* ssid = "xyz";  // P1
+  const char* pass = "abc";  // P1
 
   bool Status=0;
   
@@ -117,12 +115,12 @@ void Enphase() {
     
   if (ssl_client.connect(ip, 443)) {
     
-    ssl_client.println("GET /ivp/meters/readings HTTP/1.1");    // you can change this URL
+    ssl_client.println("GET /ivp/meters/readings HTTP/1.1");
     ssl_client.print  ("Host: "); ssl_client.println(ip);
     ssl_client.println("Accept: application/json");
-    ssl_client.println("Authorization: Bearer eyJra ...cxkVA");  // P2 = Token
+    ssl_client.println("Authorization: Bearer TOKEN");  //  P2
     ssl_client.println("Connection: close");
-    ssl_client.println("");
+    ssl_client.println("");  // IMPORTANT
 
     unsigned long ms = millis();
     while (!ssl_client.available() && millis() - ms < 3000) {delay(0);}
@@ -134,31 +132,29 @@ void Enphase() {
   }
   else { Serial.println("  No SSL connexion"); }
 
-  S2=S1;
-  Solar_W=0; Grid_W=0;
+  if ( FORMAT == 1 ) {
+    S2=S1;
+    Solar_W=0; Grid_W=0;
 
-  for (int i=0; i < S1.length(); i++) {  // Parse
-    S3=0;
-    if (S2.startsWith("\"activePower")) {
-    //Serial.print("N="); Serial.println(N);
-      i += 15;  int j=15;
-      do {//Serial.print(S2.charAt(j));
-            S3 += S2.charAt(j); i++; j++;}
-      while (S2.charAt(j) != '.');
+    for (int i=0; i < S1.length(); i++) {  // Parse
+      S3=0;
+      if (S2.startsWith("\"activePower")) {
+        i += 15;  int j=15;
+        do { S3 += S2.charAt(j); i++; j++; } while (S2.charAt(j) != '.');
         
-      S3 = S3.substring(1);
-      int L=S3.length();
-      S3.toCharArray(Buf,L+1);
-      Data = atoi(Buf);
+        S3 = S3.substring(1);
+        int L=S3.length();
+        S3.toCharArray(Buf,L+1);
+        Data = atoi(Buf);
 
-      if (N==1) { Solar_W=Data; Serial.print("  Solar_W="); Serial.print(Solar_W);  }   // N=2-4 : phase R S T
-      if (N==5) { Grid_W=Data;  Serial.print("  Grid_W=");  Serial.println(Grid_W); }    // N=6-8 : phase R S T
+        if (N==1) { Solar_W=Data; Serial.print("  Solar_W="); Serial.print(Solar_W);  }   // N=2-4 : phase R S T
+        if (N==5) { Grid_W=Data;  Serial.print("  Grid_W=");  Serial.println(Grid_W); }    // N=6-8 : phase R S T
         
         S2 = S2.substring(j);
         N++;
       }
-    S2 = S2.substring(1);
+      S2 = S2.substring(1);
+    }
+    if (Grid_W==0) { Serial.println("  No DATA");}  // Problem with format
   }
-
-  if (Grid_W==0) { Serial.println("  No DATA");}  // Problem with format
 }
